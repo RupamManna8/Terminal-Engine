@@ -11,6 +11,7 @@ import { progressRoutes } from './routes/progress';
 import { githubRoutes } from './routes/github';
 
 const fastify = Fastify({
+  trustProxy: true,
   logger: {
     transport: {
       target: 'pino-pretty',
@@ -36,7 +37,7 @@ async function main() {
     cookie: {
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
-      sameSite: 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     },
   });
