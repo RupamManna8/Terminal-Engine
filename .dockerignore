@@ -1,0 +1,11 @@
+node_modules
+dist
+.vscode
+.env
+.env.local
+npm-debug.log
+.DS_Store
+.git
+.github
+Dockerfile
+docker-compose.yml

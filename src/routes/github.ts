@@ -44,12 +44,35 @@ export const githubRoutes: FastifyPluginAsync = async (fastify: FastifyInstance)
         return reply.code(400).send({ error: tokenJson.error || 'Failed to retrieve access token' });
       }
 
+      let username = 'guest';
+      try {
+        const userProfileRes = await fetch('https://api.github.com/user', {
+          headers: {
+            Authorization: `Bearer ${tokenJson.access_token}`,
+            'User-Agent': 'Fastify-Terminal-Backend',
+          },
+        });
+        if (userProfileRes.ok) {
+          const userProfile = (await userProfileRes.json()) as { login?: string };
+          username = userProfile.login || 'guest';
+        }
+      } catch (e) {}
+
       const encrypted = encryptToken(tokenJson.access_token, config.ENCRYPTION_KEY);
 
       await prisma.githubCredential.upsert({
         where: { userId },
-        update: { encryptedToken: encrypted },
-        create: { userId, encryptedToken: encrypted },
+        update: { 
+          encryptedToken: encrypted,
+          repoOwner: username,
+          repoName: 'careerverse-playground'
+        },
+        create: { 
+          userId, 
+          encryptedToken: encrypted,
+          repoOwner: username,
+          repoName: 'careerverse-playground'
+        },
       });
 
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
