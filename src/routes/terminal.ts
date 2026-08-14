@@ -7,6 +7,7 @@ import { TerminalSessionState, UserProgress, Lesson } from '../shared/types';
 import { createDefaultRoot } from '../engines/vfs';
 import { decryptToken } from '../engines/github';
 import { config } from '../config';
+import { parseCommand } from '../engines/parser';
 
 declare module 'fastify' {
   interface Session {
@@ -214,6 +215,8 @@ export const terminalRoutes: FastifyPluginAsync = async (fastify: FastifyInstanc
     const nextActiveLesson = defaultLessons.find((l: Lesson) => !nextCompletedSet.has(l.id));
     const nextStep = nextActiveLesson ? nextActiveLesson.steps[request.session.activeStepIndex] : null;
 
+    const ast = parseCommand(command);
+
     return {
       stdout: response.stdout,
       stderr: response.stderr,
@@ -221,6 +224,11 @@ export const terminalRoutes: FastifyPluginAsync = async (fastify: FastifyInstanc
       feedback: feedbackMessages,
       cwd: finalState.cwd,
       history: finalState.history,
+      vfs: finalState.vfs,
+      git: finalState.git,
+      command: ast?.command || '',
+      subcommand: ast?.subcommand || '',
+      args: ast?.args || [],
       progress: {
         xp: progressState.xp,
         level: progressState.level,

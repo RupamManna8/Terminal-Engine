@@ -464,16 +464,14 @@ export const gitPlugin: CommandPlugin = {
           return { stdout: '', stderr: `fatal: '${remote}' does not appear to be a git repository`, exitCode: 1 };
         }
 
-        let outputMessage = '';
-        if (ctx.githubConnected && ctx.githubApiCall) {
-          outputMessage += 'Syncing local virtual repository commits with real GitHub...\n';
-          const pushResult = await ctx.githubApiCall('push', { remote, branch });
-          outputMessage += pushResult.message || `Successfully pushed to github.com (${remote}/${branch})\n`;
-        } else {
-          outputMessage += `Enumerating objects: 5, done.\n`;
-          outputMessage += `To ${state.remotes[remote].url}\n`;
-          outputMessage += `   ${generateHash().substring(0, 7)}..${(state.branches[branch] || '').substring(0, 7)}  ${branch} -> ${branch}\n`;
+        if (!ctx.githubConnected || !ctx.githubApiCall) {
+          return { stdout: '', stderr: 'fatal: GitHub account not authenticated. Please link your GitHub account first in the top HUD.', exitCode: 1 };
         }
+
+        let outputMessage = '';
+        outputMessage += 'Syncing local virtual repository commits with real GitHub...\n';
+        const pushResult = await ctx.githubApiCall('push', { remote, branch });
+        outputMessage += pushResult.message || `Successfully pushed to github.com (${remote}/${branch})\n`;
 
         return {
           stdout: outputMessage,
@@ -491,16 +489,16 @@ export const gitPlugin: CommandPlugin = {
           return { stdout: '', stderr: `fatal: '${remote}' does not appear to be a git repository`, exitCode: 1 };
         }
 
+        if (!ctx.githubConnected || !ctx.githubApiCall) {
+          return { stdout: '', stderr: 'fatal: GitHub account not authenticated. Please link your GitHub account first in the top HUD.', exitCode: 1 };
+        }
+
         let outputMessage = '';
-        if (ctx.githubConnected && ctx.githubApiCall) {
-          outputMessage += 'Syncing latest files from real GitHub to virtual repo...\n';
-          const pullResult = await ctx.githubApiCall('pull', { remote, branch });
-          outputMessage += pullResult.message || `Successfully pulled from github.com (${remote}/${branch})\n`;
-          if (pullResult.vfs) {
-            ctx.vfs.getRoot().children = pullResult.vfs.children;
-          }
-        } else {
-          outputMessage += `From ${state.remotes[remote].url}\n * branch            ${branch}     -> FETCH_HEAD\nAlready up to date.\n`;
+        outputMessage += 'Syncing latest files from real GitHub to virtual repo...\n';
+        const pullResult = await ctx.githubApiCall('pull', { remote, branch });
+        outputMessage += pullResult.message || `Successfully pulled from github.com (${remote}/${branch})\n`;
+        if (pullResult.vfs) {
+          ctx.vfs.getRoot().children = pullResult.vfs.children;
         }
 
         return { stdout: outputMessage, stderr: '', exitCode: 0, updatedState: { vfs: ctx.vfs.getRoot(), git: ctx.git.getState() } };
@@ -593,12 +591,37 @@ export const dockerPlugin: CommandPlugin = {
   },
 };
 
+export const helpPlugin: CommandPlugin = {
+  name: 'help',
+  description: 'Display list of available commands and utilities',
+  async execute(ctx, ast) {
+    const output = [
+      'CareerVerse AI Virtual Shell - Available Commands:',
+      '  help          Display this help message',
+      '  clear         Clear the terminal screen',
+      '  ls, dir       List directory contents',
+      '  cd [dir]      Change the current directory',
+      '  mkdir [dir]   Create a new directory',
+      '  touch [file]  Create an empty file',
+      '  cat [file]    Display file contents',
+      '  rm [file]     Remove a file',
+      '  cp [src] [dst]Copy a file',
+      '  mv [src] [dst]Move a file',
+      '  tree          Display directory structure tree',
+      '  git           Simulate Git operations (init, status, add, commit, push, pull)',
+      '  npm           Simulate Node Package Manager (install, run, start)',
+    ].join('\n');
+    return { stdout: output, stderr: '', exitCode: 0 };
+  },
+};
+
 // --- Registry Setup ---
 
 export function createDefaultRegistry(): CommandRegistry {
   const registry = new CommandRegistry();
   registry.register(pwdPlugin);
   registry.register(lsPlugin);
+  registry.register(helpPlugin);
   registry.register(cdPlugin);
   registry.register(mkdirPlugin);
   registry.register(touchPlugin);
