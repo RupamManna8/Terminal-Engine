@@ -63,7 +63,7 @@ export const progressRoutes: FastifyPluginAsync = async (fastify: FastifyInstanc
         failuresCount: dbProgress.failuresCount,
       };
 
-      const { awardXp } = await import('../engines/progress');
+      const { awardXp } = await import('../engines/progress.js');
       const xpRes = awardXp(progressState, xpReward);
 
       await prisma.progress.update({
