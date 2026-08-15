@@ -95,7 +95,7 @@ export const terminalRoutes: FastifyPluginAsync = async (fastify: FastifyInstanc
     }
 
     const githubApiCall = async (action: string, payload: any) => {
-      const { pushVfsToGithub, pullGithubToVfs } = await import('../engines/github');
+      const { pushVfsToGithub, pullGithubToVfs } = await import('../engines/github.js');
       
       const repoOwner = dbCred?.repoOwner || '';
       const repoName = dbCred?.repoName || '';
@@ -168,7 +168,7 @@ export const terminalRoutes: FastifyPluginAsync = async (fastify: FastifyInstanc
         if (newUnlocks.length > 0) {
           for (const achId of newUnlocks) {
             progressState.achievements.push(achId);
-            const { achievementDefinitions } = await import('../engines/progress');
+            const { achievementDefinitions } = await import('../engines/progress.js');
             const def = achievementDefinitions.find((a: AchievementDefinition) => a.id === achId);
             if (def) {
               const xpRes = awardXp(progressState, def.xpBonus);

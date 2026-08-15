@@ -61,8 +61,11 @@ function wrap(collectionName: string) {
 		},
 		upsert: async ({ where, create, update }: { where: any; create: any; update: any }) => {
 			const coll = database!.collection(collectionName);
-			const res = await coll.findOneAndUpdate(mapWhere(where), { $set: { ...update, updatedAt: new Date() }, $setOnInsert: { ...create, createdAt: new Date() } }, { upsert: true, returnDocument: 'after' as any });
-			const doc = res.value as any;
+			const query = mapWhere(where);
+			const existing = await coll.findOne(query);
+			const doc = existing
+				? (await coll.findOneAndUpdate(query, { $set: { ...update, updatedAt: new Date() } }, { returnDocument: 'after' as any })).value as any
+				: (await coll.insertOne({ ...create, createdAt: new Date(), updatedAt: new Date() }), await coll.findOne(query) as any);
 			if (doc && doc._id) doc.id = doc._id.toString();
 			return doc;
 		},
